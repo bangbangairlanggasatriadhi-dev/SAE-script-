@@ -1,5 +1,5 @@
 -- ============ CONFIG ============
-local HUB_URL     = "https://raw.githubusercontent.com/bangbangairlanggasatriadhi-dev/SAE-script-/refs/heads/main/Smap.lua"
+local HUB_URL     = "https://raw.githubusercontent.com/bangbangairlanggasatriadhi-dev/SAE-script-/refs/heads/main/Stealanegg.lua"
 local LOADER_NAME = "Security.lua"
 local HEADER      = "-- Security, dont change anything"
 local OVERWRITE   = true
